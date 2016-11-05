@@ -23,37 +23,40 @@ struct hostent *gethostbyname(const char *name_) {
 }
 
 // allocate memory in thread local statically
+#define HOSTENT_POOL_SIZE 4
 struct hostent *hostent_allocate() {
     static __thread int index = 0;
-    static __thread struct hostent pool[16];
-    return &pool[index++%16];
+    static __thread struct hostent pool[HOSTENT_POOL_SIZE];
+    return &pool[index++ % HOSTENT_POOL_SIZE];
 }
 
 // allocate memory in thread local statically
+#define IN_ADDR_PTR_ARRAY_POOL_SIZE 8
+#define IN_ADDR_PTR_ARRAY_SIZE 8
 struct in_addr ** in_addr_ptr_array_allocate() {
     static __thread int index = 0;
-    static __thread struct in_addr *pool[16][16];
-    return pool[index++%16];
+    static __thread struct in_addr *pool[IN_ADDR_PTR_ARRAY_POOL_SIZE][IN_ADDR_PTR_ARRAY_SIZE];
+    return pool[index++ % IN_ADDR_PTR_ARRAY_POOL_SIZE];
 }
 
 // allocate memory in thread local statically
-struct in_addr *in_addr_allocate(in_addr_t ip) {
+#define IN_ADDR_POOL_SIZE 64
+struct in_addr *in_addr_allocate() {
     static __thread int index = 0;
-    static __thread struct in_addr pool[256];
-    struct in_addr *obj = &pool[index++%256];
-    obj->s_addr = ip;
-    return obj;
+    static __thread struct in_addr pool[IN_ADDR_POOL_SIZE];
+    return &pool[index++ % IN_ADDR_POOL_SIZE];
 }
 
 // convert []in_addr_t to hostent*
 struct hostent *hostent_new(in_addr_t *ip_list, size_t ip_list_len) {
     struct hostent *host = hostent_allocate();
     struct in_addr **in_addr_ptr_array = in_addr_ptr_array_allocate();
-    if (ip_list_len > 15) {
-        ip_list_len = 15;
+    if (ip_list_len > IN_ADDR_PTR_ARRAY_SIZE-1) {
+        ip_list_len = IN_ADDR_PTR_ARRAY_SIZE-1;
     }
     for (int i = 0; i < ip_list_len; i++) {
-        in_addr_ptr_array[i] = in_addr_allocate(ip_list[i]);
+        in_addr_ptr_array[i] = in_addr_allocate();
+        in_addr_ptr_array[i]->s_addr = ip_list[i];
     }
     in_addr_ptr_array[ip_list_len] = NULL; // null terminated array
     host->h_addr_list = (char**)in_addr_ptr_array;

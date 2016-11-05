@@ -7,5 +7,7 @@ import (
 
 func Test_gethostbyname(t *testing.T) {
 	dlsym.HookStart()
-	example_gethostbyname()
+	for i := 0; i < 10; i++ {
+		example_gethostbyname()
+	}
 }
