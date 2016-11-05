@@ -19,6 +19,6 @@ typedef struct _gstr {
 } gstr;
 
 void libc_hook_start();
-struct hostent *hostent_new(in_addr_t *ip_list, size_t ip_list_len);
+struct hostent *hostent_new(char *name, in_addr_t *ip_list, size_t ip_list_len);
 
 #endif

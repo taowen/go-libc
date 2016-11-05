@@ -28,10 +28,10 @@ func go_gethostbyname(name_ C.struct__gstr) *C.struct_hostent {
 		ipAsIntList = append(ipAsIntList, C.in_addr_t(asInt))
 	}
 	if len(ipAsIntList) == 0 {
-		return C.hostent_new(nil, C.size_t(0))
+		return C.hostent_new(name_.Data, nil, C.size_t(0))
 	} else {
 		ptr := unsafe.Pointer(&ipAsIntList[0])
-		return C.hostent_new((*C.in_addr_t)(ptr), C.size_t(len(ipAsIntList)))
+		return C.hostent_new(name_.Data, (*C.in_addr_t)(ptr), C.size_t(len(ipAsIntList)))
 	}
 }
 

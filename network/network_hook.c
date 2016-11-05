@@ -40,6 +40,15 @@ struct in_addr ** in_addr_ptr_array_allocate() {
 }
 
 // allocate memory in thread local statically
+#define ALIAS_PTR_ARRAY_POOL_SIZE 8
+#define ALIAS_PTR_ARRAY_SIZE 8
+struct char ** alias_ptr_array_allocate() {
+    static __thread int index = 0;
+    static __thread struct char *pool[ALIAS_PTR_ARRAY_POOL_SIZE][ALIAS_PTR_ARRAY_SIZE];
+    return pool[index++ % ALIAS_PTR_ARRAY_POOL_SIZE];
+}
+
+// allocate memory in thread local statically
 #define IN_ADDR_POOL_SIZE 64
 struct in_addr *in_addr_allocate() {
     static __thread int index = 0;
@@ -48,7 +57,7 @@ struct in_addr *in_addr_allocate() {
 }
 
 // convert []in_addr_t to hostent*
-struct hostent *hostent_new(in_addr_t *ip_list, size_t ip_list_len) {
+struct hostent *hostent_new(char *name, in_addr_t *ip_list, size_t ip_list_len) {
     struct hostent *host = hostent_allocate();
     struct in_addr **in_addr_ptr_array = in_addr_ptr_array_allocate();
     if (ip_list_len > IN_ADDR_PTR_ARRAY_SIZE-1) {
@@ -59,6 +68,12 @@ struct hostent *hostent_new(in_addr_t *ip_list, size_t ip_list_len) {
         in_addr_ptr_array[i]->s_addr = ip_list[i];
     }
     in_addr_ptr_array[ip_list_len] = NULL; // null terminated array
+    char **alias_ptr_array = alias_ptr_array_allocate();
+    alias_ptr_array[0] = NULL;
+    host->h_name = name;
+    host->h_aliases = alias_ptr_array;
+    host->h_addrtype = AF_INET;
+    host->h_length = 4;
     host->h_addr_list = (char**)in_addr_ptr_array;
     return host;
 }
